@@ -1,7 +1,7 @@
 L.I.M.O.N.E.
 ===
 
-Ludoteca Interattiva Multi Ordine Notoriamente Eccitante
+Ludoteca Interattiva Molto Ordinata e Notoriamente Eccitante
 
 ![image](limone.png)
 

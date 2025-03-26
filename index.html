@@ -7,6 +7,8 @@
         --dark: #223;
         --weeerde: #00983A;
         --weeerde-dark: #060;
+        --light-gradient: linear-gradient(#AFF,#AAF);
+        /* --game-gradient: linear-gradient(to top,rgb(0, 89, 255),rgb(53, 181, 255)); */
     }
     body {
         font-family: sans-serif;
@@ -54,10 +56,11 @@
         image-rendering: optimizeSpeed;
         box-shadow: 10px 10px var(--white);
         transition: 0.1s;
-        /* text-align: center;
+        background-image: var(--light-gradient);
+        text-align: center;
         vertical-align: middle;
         display: table-cell;
-        font-size: 320%; */
+        font-size: 320%;
     }
     .game-thumb:hover {
         box-shadow: 18px 18px var(--white);
@@ -79,8 +82,8 @@
         <div id="wrapper">
             <a v-for="g in games" class="game-card" :href="g.link">
                 <div v-if="!mobile || (mobile && g.mobile)">
-                    <img class="game-thumb" :src="g.thumb || 'thumbs/no-image.png'"/>
-                    <!-- <div class="game-thumb">🎮</div> -->
+                    <img v-if="g.thumb" class="game-thumb" :src="g.thumb || 'thumbs/no-image.png'"/>
+                    <div v-else class="game-thumb">🎮</div>
                     <div class="game-desc">
                         <div class="game-title">{{g.title}}</div>
                     </div>
