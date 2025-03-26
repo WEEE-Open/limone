@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<title>LIMONE</title>
+<style>
+    :root {
+        --white: white;
+        --black: black;
+        --dark: #223;
+        --weeerde: #00983A;
+        --weeerde-dark: #060;
+    }
+    body {
+        font-family: sans-serif;
+        color: var(--white);
+        background-color: var(--dark);
+    }
+    #title {
+        margin-left: 80px;
+    }
+    #subtitle {
+        font-family: Brush Script MT, Brush Script Std, cursive;
+        font-weight: normal;
+        margin-left: 90px;
+    }
+    #logo {
+        width: auto;
+        height: 1.5em;
+        vertical-align: text-bottom;
+    }
+    #wrapper {
+        width: 80%;
+        padding: 10px;
+        border-radius: 18px;
+        display: flex;
+        justify-content: left;
+        align-items: top;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .game-card {
+        border-radius: 12px;
+        padding: 10px;
+        color: var(--white);
+        background-color: transparent;
+        text-decoration: none;
+        transition: 0.1s;
+    }
+    .game-card:hover {
+        transition: 0.2s;
+    }
+    .game-thumb {
+        width: 240px;
+        height: 135px;
+        border-radius: 10px;
+        image-rendering: optimizeSpeed;
+        box-shadow: 10px 10px var(--white);
+        transition: 0.1s;
+        /* text-align: center;
+        vertical-align: middle;
+        display: table-cell;
+        font-size: 320%; */
+    }
+    .game-thumb:hover {
+        box-shadow: 18px 18px var(--white);
+        transition: 0.2s;
+    }
+    .game-desc {
+        margin: 0;
+        padding: 20px;
+    }
+    .game-title {
+        font-size: 120%;
+        margin-bottom: 4px;
+    }
+</style>
+<app>
+    <main>
+        <h1 id="title"><img src="limone.png" id="logo"/> L.I.M.O.N.E.</h1>
+        <h2 id="subtitle">Ludoteca Interattiva Molto Ordinata e Notoriamente Eccitante</h2>
+        <div id="wrapper">
+            <a v-for="g in games" class="game-card" :href="g.link">
+                <div v-if="!mobile || (mobile && g.mobile)">
+                    <img class="game-thumb" :src="g.thumb || 'thumbs/no-image.png'"/>
+                    <!-- <div class="game-thumb">🎮</div> -->
+                    <div class="game-desc">
+                        <div class="game-title">{{g.title}}</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </main>
+</app>
+<script src="vue.global.prod.js"></script>
+<script>
+    const app = {
+        data() {
+            return {
+                mobile: navigator.userAgent.match(/mobile/i) ? true : false,
+                games: [
+                    {
+                        title:'WEEE Open Game',
+                        link:'https://WEEE-Open.github.io/WEEE-Open-Game/',
+                        thumb:'thumbs/WOG.png'
+                    },
+                    {
+                        title:'Super Mario clone',
+                        link:'https://donatomodugno.github.io/DonModGameBox/games/PlatformJS/Sprint4/index.html',
+                    },
+                    {
+                        title:'Gioco bello 3',
+                    },
+                ]
+            }
+        },
+    }
+    Vue.createApp(app).mount('app')
+</script>
