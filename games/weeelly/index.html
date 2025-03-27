@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weeelly VS Evil Tommy</title>
+</head>
+<style>
+    body {margin:0}
+    p {margin-left:40px}
+</style>
+<body>
+    <canvas id="surface"></canvas>
+    <p>Press F to enter full screen</p>
+</body>
+<script>
+const [W,H] = [640,480]
+const canvas = document.getElementById('surface')
+canvas.width = W
+canvas.height = H
+const ctx = canvas.getContext('2d')
+const keys = {
+    ArrowLeft:{pressed:false},
+    ArrowRight:{pressed:false},
+}
+function renderClear(x=0,y=0,w=W,h=H) {
+    ctx.clearRect(x,y,w,h)
+}
+function renderRect(x,y,w,h,color) {
+    ctx.fillStyle = color
+    ctx.fillRect(x,y,w,h)
+}
+function renderCirle(x,y,r,color) {
+    ctx.fillStyle = color
+    ctx.beginPath()
+    ctx.arc(x,y,r,0,2*Math.PI)
+    ctx.fill()
+}
+function renderText(text,x,y,color,size=20) {
+    ctx.fillStyle = color
+    ctx.font = size+'px sans-serif'
+    ctx.fillText(text,x,y)
+}
+function checkCollision(a,b) {
+    return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y
+}
+const items_values = {
+    screw:5,
+    monitor:10,
+    cpu:20,
+    bomb:-10,
+}
+class Player {
+    constructor(x,y) {
+        this.x = x
+        this.y = y
+        this.w = 50
+        this.h = 50
+        this.color = 'red'
+        this.speed = 5
+    }
+    render() {
+        renderRect(this.x,this.y,this.w,this.h,this.color)
+    }
+    update() {
+        if(keys.ArrowLeft.pressed && this.x>60)
+            this.x -= this.speed
+        if(keys.ArrowRight.pressed && this.x+this.w<W-60)
+            this.x += this.speed
+    }
+}
+class Enemy extends Player {
+    constructor(x,y) {
+        super(x,y)
+        this.color = 'blue'
+    }
+    update() {
+        this.x += this.speed
+        if(this.x<60 || this.x+this.w>W-60)
+            this.speed *= -1
+    }
+}
+class Item {
+    constructor(x,type) {
+        this.x = x
+        this.y = 50
+        this.w = 10
+        this.h = 10
+        this.color = 'green'
+        this.speed = 2
+        this.type = type
+        this.value = items_values[type]
+    }
+    render() {
+        renderRect(this.x,this.y,this.w,this.h,this.color)
+    }
+    update() {
+        this.y += this.speed
+    }
+}
+class Bomb extends Item {
+    constructor(x) {
+        super(x,'bomb')
+        this.color = 'black'
+        this.speed = 4
+    }
+}
+const weeelly = new Player(W/2,H-50)
+const evil_tommy = new Enemy(W/2,0)
+let items_and_bombs = []
+let life = 3
+let score = 0
+function loop() {
+    renderRect(0,0,W,H,'lightyellow')
+    weeelly.render()
+    weeelly.update()
+    evil_tommy.render()
+    evil_tommy.update()
+    items_and_bombs.forEach(item => {
+        item.render()
+        item.update()
+    })
+    items_and_bombs = items_and_bombs.filter(elem => elem.y<H)
+    if(Math.random()<0.01) {
+        if(Math.random()<0.8)
+            items_and_bombs.push(new Item(evil_tommy.x,'screw'))
+        else
+            items_and_bombs.push(new Bomb(evil_tommy.x))
+    }
+    items_and_bombs.forEach(item => {
+        if(checkCollision(weeelly,item)) {
+            score += item.value
+            if(score<0)
+                score = 0
+            if(item.type=='bomb')
+                life--
+            items_and_bombs = items_and_bombs.filter(elem => elem!=item)
+        }
+    })
+    for(let i=0;i<life;i++)
+        renderCirle(20,H/3+i*30,10,'red')
+    renderRect(W-40,H-40,20,-10-4*100,'grey')
+    renderRect(W-40,H-40,20,-10-4*score,'green')
+    if(life<=0) {
+        alert('Game Over! Your score is: '+score)
+        location.reload()
+    }
+    if(score>=100) {
+        alert('You win!')
+        location.reload()
+    }
+    requestAnimationFrame(loop)
+}
+addEventListener('keydown',({key}) => {
+    if(key in keys && keys[key].pressed==false)
+        keys[key].pressed = true
+    if(key=='f')
+        canvas.requestFullscreen()
+})
+addEventListener('keyup',({key}) => {
+    if(key in keys)
+        keys[key].pressed = false
+})
+addEventListener('load',loop)
+</script>

@@ -8,12 +8,14 @@
         --weeerde: #00983A;
         --weeerde-dark: #060;
         --light-gradient: linear-gradient(#AFF,#AAF);
-        /* --game-gradient: linear-gradient(to top,rgb(0, 89, 255),rgb(53, 181, 255)); */
     }
     body {
         font-family: sans-serif;
         color: var(--white);
         background-color: var(--dark);
+    }
+    main {
+        margin-left: 10px;
     }
     #title {
         margin-left: 80px;
@@ -74,6 +76,10 @@
         font-size: 120%;
         margin-bottom: 4px;
     }
+    #footer {
+        margin-top: 20px;
+        margin-left: 80px;
+    }
 </style>
 <app>
     <main>
@@ -81,14 +87,18 @@
         <h2 id="subtitle">Ludoteca Interattiva Molto Ordinata e Notoriamente Eccitante</h2>
         <div id="wrapper">
             <a v-for="g in games" class="game-card" :href="g.link">
-                <div v-if="!mobile || (mobile && g.mobile)">
-                    <img v-if="g.thumb" class="game-thumb" :src="g.thumb || 'thumbs/no-image.png'"/>
-                    <div v-else class="game-thumb">🎮</div>
+                <div v-if="(!mobile && !g.mobile) || (mobile && g.mobile) || show_all">
+                    <img class="game-thumb" v-if="g.thumb" :src="g.thumb"/>
+                    <div class="game-thumb" v-else>🎮</div>
                     <div class="game-desc">
                         <div class="game-title">{{g.title}}</div>
                     </div>
                 </div>
             </a>
+        </div>
+        <div id="footer">
+            <input type="checkbox" id="show_all" v-model="show_all"/>
+            <label for="show_all"> Show also {{mobile ? 'desktop-only' : 'mobile-only'}} games</label>
         </div>
     </main>
 </app>
@@ -100,18 +110,21 @@
                 mobile: navigator.userAgent.match(/mobile/i) ? true : false,
                 games: [
                     {
-                        title:'WEEE Open Game',
-                        link:'https://WEEE-Open.github.io/WEEE-Open-Game/',
-                        thumb:'thumbs/WOG.png'
+                        title: 'WEEE Open Game',
+                        link: 'https://WEEE-Open.github.io/WEEE-Open-Game/',
+                        thumb: 'thumbs/WOG.png',
                     },
                     {
-                        title:'Super Mario clone',
-                        link:'https://donatomodugno.github.io/DonModGameBox/games/PlatformJS/Sprint4/index.html',
+                        title: 'Super Mario clone',
+                        link: 'https://donatomodugno.github.io/DonModGameBox/games/PlatformJS/Sprint4/index.html',
                     },
                     {
-                        title:'Gioco bello 3',
+                        title: 'Weeelly VS Evil Tommy',
+                        link: 'games/weeelly/index.html',
+                        mobile: true,
                     },
-                ]
+                ],
+                show_all: false,
             }
         },
     }
