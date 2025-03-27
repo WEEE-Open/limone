@@ -79,6 +79,13 @@
     #footer {
         margin-top: 20px;
         margin-left: 80px;
+        color: gray;
+        font-size: 120%;
+        font-family: monospace;
+    }
+    #footer-text {
+        border-top: 1px solid gray;
+        padding-top: 10px;
     }
 </style>
 <app>
@@ -87,18 +94,15 @@
         <h2 id="subtitle">Ludoteca Interattiva Molto Ordinata e Notoriamente Eccitante</h2>
         <div id="wrapper">
             <a v-for="g in games" class="game-card" :href="g.link">
-                <div v-if="(!mobile && !g.mobile) || (mobile && g.mobile) || show_all">
-                    <img class="game-thumb" v-if="g.thumb" :src="g.thumb"/>
-                    <div class="game-thumb" v-else>🎮</div>
-                    <div class="game-desc">
-                        <div class="game-title">{{g.title}}</div>
-                    </div>
+                <img class="game-thumb" v-if="g.thumb" :src="g.thumb"/>
+                <div class="game-thumb" v-else>🎮</div>
+                <div class="game-desc">
+                    <div class="game-title">{{g.title}}</div>
                 </div>
             </a>
         </div>
         <div id="footer">
-            <input type="checkbox" id="show_all" v-model="show_all"/>
-            <label for="show_all"> Show also {{mobile ? 'desktop-only' : 'mobile-only'}} games</label>
+            <span id="footer-text">Made by: WEEE Open student team</span>
         </div>
     </main>
 </app>
@@ -121,10 +125,8 @@
                     {
                         title: 'Weeelly VS Evil Tommy',
                         link: 'games/weeelly/index.html',
-                        mobile: true,
                     },
                 ],
-                show_all: false,
             }
         },
     }
