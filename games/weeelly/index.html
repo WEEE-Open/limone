@@ -44,6 +44,10 @@ function renderText(text,x,y,color,size=20) {
 function checkCollision(a,b) {
     return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y
 }
+const BOUND = 60
+const PLAYER_SIZE = 80
+const TEXT_PARTICLE_SPAN = 50
+const TEXT_PARTICLE_SIZE = 30
 const items_values = {
     screw:5,
     monitor:10,
@@ -54,19 +58,18 @@ class Player {
     constructor(x,y) {
         this.x = x
         this.y = y
-        this.w = 80
-        this.h = 80
+        this.w = PLAYER_SIZE
+        this.h = PLAYER_SIZE
         this.color = 'red'
         this.speed = 5
     }
     render() {
-        // renderRect(this.x,this.y,this.w,this.h,this.color)
         ctx.drawImage(sprites.weeelly,40,0,24,24,this.x,this.y,this.w,this.h)
     }
     update() {
-        if(keys.ArrowLeft.pressed && this.x>60)
+        if(keys.ArrowLeft.pressed && this.x>BOUND)
             this.x -= this.speed
-        if(keys.ArrowRight.pressed && this.x+this.w<W-60)
+        if(keys.ArrowRight.pressed && this.x+this.w<W-BOUND)
             this.x += this.speed
     }
 }
@@ -80,23 +83,23 @@ class Enemy extends Player {
     }
     update() {
         this.x += this.speed
-        if(this.x<60 || this.x+this.w>W-60)
+        if(this.x<BOUND || this.x+this.w>W-BOUND)
             this.speed *= -1
     }
 }
 class Item {
     constructor(x,type) {
         this.x = x
-        this.y = 80
-        this.w = 10
-        this.h = 10
+        this.y = PLAYER_SIZE
+        this.w = 32
+        this.h = 32
         this.color = 'green'
         this.speed = 2
         this.type = type
         this.value = items_values[type]
     }
     render() {
-        renderRect(this.x,this.y,this.w,this.h,this.color)
+        ctx.drawImage(sprites[this.type],this.x,this.y,this.w,this.h)
     }
     update() {
         this.y += this.speed
@@ -109,11 +112,27 @@ class Bomb extends Item {
         this.speed = 4
     }
 }
-const weeelly = new Player(W/2,H-80)
+class TextParticle {
+    constructor(x,text,color) {
+        this.x = x
+        this.y = H-PLAYER_SIZE
+        this.text = text
+        this.color = color
+        this.speed = 2
+    }
+    render() {
+        renderText(this.text,this.x,this.y,this.color,TEXT_PARTICLE_SIZE)
+    }
+    update() {
+        this.y -= this.speed
+    }
+}
+const weeelly = new Player(W/2,H-PLAYER_SIZE)
 const evil_tommy = new Enemy(W/2,0)
 let items_and_bombs = []
 let life = 3
 let score = 0
+let text_particles = []
 function loop() {
     renderRect(0,0,W,H,'#8CF')
     weeelly.render()
@@ -127,22 +146,34 @@ function loop() {
     items_and_bombs = items_and_bombs.filter(elem => elem.y<H)
     if(Math.random()<0.01) {
         if(Math.random()<0.8)
-            items_and_bombs.push(new Item(evil_tommy.x,'screw'))
+            items_and_bombs.push(new Item(evil_tommy.x+PLAYER_SIZE/2,['screw','monitor','cpu'][Math.floor(Math.random()*3)]))
         else
-            items_and_bombs.push(new Bomb(evil_tommy.x))
+            items_and_bombs.push(new Bomb(evil_tommy.x+PLAYER_SIZE/2))
     }
     items_and_bombs.forEach(item => {
         if(checkCollision(weeelly,item)) {
             score += item.value
             if(score<0)
                 score = 0
-            if(item.type=='bomb')
+            if(item.type=='bomb') {
                 life--
+                text_particles.push(new TextParticle(weeelly.x,item.value,'red'))
+            } else {
+                text_particles.push(new TextParticle(weeelly.x,'+'+item.value,'green'))
+            }
             items_and_bombs = items_and_bombs.filter(elem => elem!=item)
         }
     })
+    text_particles.forEach(tp => {
+        tp.render()
+        tp.update()
+        if(tp.y<H-PLAYER_SIZE-TEXT_PARTICLE_SPAN)
+            text_particles = text_particles.filter(elem => elem!=tp)
+    })
+    for(let i=0;i<3;i++)
+        ctx.drawImage(sprites.life_empty,20,H/2-i*40,32,32)
     for(let i=0;i<life;i++)
-        renderCirle(20,H/3+i*30,10,'red')
+        ctx.drawImage(sprites.life,20,H/2-i*40,32,32)
     renderRect(W-40,H-40,20,-10-4*100,'grey')
     renderRect(W-40,H-40,20,-10-4*score,'green')
     if(life<=0) {
@@ -158,10 +189,13 @@ function loop() {
 const sprites = {
     weeelly:document.createElement('img'),
     // evil_tommy:document.createElement('img'),
-    // screw:document.createElement('img'),
-    // monitor:document.createElement('img'),
-    // cpu:document.createElement('img'),
-    // bomb:document.createElement('img'),
+    life:document.createElement('img'),
+    life_empty:document.createElement('img'),
+    screw:document.createElement('img'),
+    monitor:document.createElement('img'),
+    cpu:document.createElement('img'),
+    bomb:document.createElement('img'),
+    cloud:document.createElement('img'),
 }
 for(let sprite in sprites)
     sprites[sprite].src = 'res/'+sprite+'.png'
