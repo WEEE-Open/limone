@@ -51,6 +51,11 @@ const BOUND = 60
 const PLAYER_SIZE = 80
 const TEXT_PARTICLE_SPAN = 50
 const TEXT_PARTICLE_SIZE = 30
+const COLORS = [
+    '#8CF',
+    '#4AF',
+    '#028',
+]
 const items_values = {
     screw:5,
     monitor:10,
@@ -65,9 +70,15 @@ class Player {
         this.h = PLAYER_SIZE
         this.color = 'red'
         this.speed = 5
+        this.after_hit = false
     }
     render() {
-        ctx.drawImage(sprites.weeelly,this.x,this.y,this.w,this.h)
+        if(this.after_hit) {
+            blink_tick++
+            if((Math.floor(blink_tick/8)+1)%2==0) 
+                ctx.drawImage(sprites.weeelly,this.x,this.y,this.w,this.h)
+        }
+        else ctx.drawImage(sprites.weeelly,this.x,this.y,this.w,this.h)
     }
     update() {
         if(keys.ArrowLeft.pressed && this.x>BOUND)
@@ -97,7 +108,7 @@ class Item {
         this.w = 32
         this.h = 32
         this.color = 'green'
-        this.speed = 2
+        this.speed = level*2
         this.type = type
         this.value = items_values[type]
     }
@@ -112,7 +123,7 @@ class Bomb extends Item {
     constructor(x) {
         super(x,'bomb')
         this.color = 'black'
-        this.speed = 4
+        this.speed = level*4
     }
 }
 class TextParticle {
@@ -130,54 +141,78 @@ class TextParticle {
         this.y -= this.speed
     }
 }
-class Background {
-    constructor(x,y=-12*8) {
+class BackgroundParticle {
+    constructor(type,x,y=-12*8) {
+        this.type = type
         this.x = x
         this.y = y
-        this.w = 24*8
-        this.h = 12*8
-        this.speed = 10
+        this.w = {'cloud':24*8,'star':4}[type]
+        this.h = {'cloud':12*8,'star':4}[type]
+        this.speed = {'cloud':10,'star':15}[type]
     }
     render() {
-        ctx.drawImage(sprites.cloud,this.x,this.y,this.w,this.h)
+        if(this.type=='cloud') ctx.drawImage(sprites.cloud,this.x,this.y,this.w,this.h)
+        if(this.type=='star') renderRect(this.x,this.y,this.w,this.h,'lightyellow')
     }
     update() {
         this.y += this.speed
     }
 }
-const weeelly = new Player(W/2,H-PLAYER_SIZE)
-const evil_tommy = new Enemy(W/2,0)
+let weeelly = new Player(W/2,H-PLAYER_SIZE)
+let evil_tommy = new Enemy(W/2,0)
+let level = 1
 let items_and_bombs = []
 let life = 3
 let score = 0
 let text_particles = []
 let clouds = [
-    new Background(random(-24*4,W+24*4),0),
-    new Background(random(-24*4,W+24*4),H*1/3),
-    new Background(random(-24*4,W+24*4),H*2/3),
+    new BackgroundParticle('cloud',random(-24*4,W+24*4),0),
+    new BackgroundParticle('cloud',random(-24*4,W+24*4),H*1/3),
+    new BackgroundParticle('cloud',random(-24*4,W+24*4),H*2/3),
 ]
+let stars = []
+let blink_tick = 0
 function loop() {
-    renderRect(0,0,W,H,'#8CF')
-    if(Math.random()<0.05) {
-        clouds.push(new Background(random(-24*4,W+24*4)))
+    /* Render */
+    renderRect(0,0,W,H,COLORS[level-1])
+    if(level==1 || level==2) {
+        clouds.forEach(cloud => cloud.render())
     }
-    clouds.forEach(cloud => {
-        cloud.render()
-        cloud.update()
-    })
-    clouds = clouds.filter(cloud => cloud.y<H)
+    if(level>2) {
+        stars.forEach(star => star.render())
+    }
     weeelly.render()
-    weeelly.update()
     evil_tommy.render()
+    items_and_bombs.forEach(item => item.render())
+    text_particles.forEach(tp => tp.render())
+    for(let i=0;i<3;i++)
+        ctx.drawImage(sprites.life_empty,20,H/2-i*40,32,32)
+    for(let i=0;i<life;i++)
+        ctx.drawImage(sprites.life,20,H/2-i*40,32,32)
+    renderRect(W-40,H-40,20,-10-4*100,'grey')
+    renderRect(W-40,H-40,20,-10-4*score,'green')
+    /* Update */
+    if(level==1 || level==2) {
+        if(Math.random()<0.05) {
+            clouds.push(new BackgroundParticle('cloud',random(-24*4,W+24*4)))
+        }
+        clouds.forEach(cloud => cloud.update())
+        clouds = clouds.filter(cloud => cloud.y<H)
+    }
+    if(level>2) {
+        if(Math.random()<0.5) {
+            stars.push(new BackgroundParticle('star',random(0,W)))
+        }
+        stars.forEach(star => star.update())
+        stars = stars.filter(star => star.y<H)
+    }
+    weeelly.update()
     evil_tommy.update()
-    items_and_bombs.forEach(item => {
-        item.render()
-        item.update()
-    })
+    items_and_bombs.forEach(item => item.update())
     items_and_bombs = items_and_bombs.filter(elem => elem.y<H)
     if(Math.random()<0.01) {
         if(Math.random()<0.8)
-            items_and_bombs.push(new Item(evil_tommy.x+PLAYER_SIZE/2,['screw','monitor','cpu'][Math.floor(Math.random()*3)]))
+            items_and_bombs.push(new Item(evil_tommy.x+PLAYER_SIZE/2,['screw','monitor','cpu'][random(0,2)]))
         else
             items_and_bombs.push(new Bomb(evil_tommy.x+PLAYER_SIZE/2))
     }
@@ -186,9 +221,14 @@ function loop() {
             score += item.value
             if(score<0)
                 score = 0
-            if(item.type=='bomb') {
+            if(item.type=='bomb' && !weeelly.after_hit) {
                 life--
                 text_particles.push(new TextParticle(weeelly.x,item.value,'red'))
+                weeelly.after_hit = true
+                setTimeout(() => {
+                    weeelly.after_hit = false
+                    blink_tick = 0
+                },1500)
             } else {
                 text_particles.push(new TextParticle(weeelly.x,'+'+item.value,'green'))
             }
@@ -196,17 +236,10 @@ function loop() {
         }
     })
     text_particles.forEach(tp => {
-        tp.render()
         tp.update()
         if(tp.y<H-PLAYER_SIZE-TEXT_PARTICLE_SPAN)
             text_particles = text_particles.filter(elem => elem!=tp)
     })
-    for(let i=0;i<3;i++)
-        ctx.drawImage(sprites.life_empty,20,H/2-i*40,32,32)
-    for(let i=0;i<life;i++)
-        ctx.drawImage(sprites.life,20,H/2-i*40,32,32)
-    renderRect(W-40,H-40,20,-10-4*100,'grey')
-    renderRect(W-40,H-40,20,-10-4*score,'green')
     if(life<=0) {
         alert('Game Over! Your score is: '+score)
         location.reload()
@@ -235,6 +268,7 @@ addEventListener('keydown',({key}) => {
         keys[key].pressed = true
     if(key=='f')
         canvas.requestFullscreen()
+    if(key>=1 && key<=3) level = key
 })
 addEventListener('keyup',({key}) => {
     if(key in keys)
