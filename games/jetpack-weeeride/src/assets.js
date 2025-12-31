@@ -1,9 +1,8 @@
 /* Global variables and functions */
-const VERSION = '0.2.0'
+const VERSION = '0.3.0'
 const MOBILE = navigator.userAgent.match(/mobile/i) ? true : false
-const [W,H] = [1024,576]//[960,540]
+const [W,H] = [960,540]//[1024,576]
 const keys = {
-    Enter:{pressed:false},
     ' ':{pressed:false},
     ArrowUp:{pressed:false},
     ArrowDown:{pressed:false},
@@ -17,6 +16,7 @@ const keys = {
     l:{pressed:false},
     m:{pressed:false},
     g:{pressed:false},
+    f:{pressed:false},
 }
 const display = {
     scene:'',
@@ -100,6 +100,12 @@ function soundPlay(sound) {
         clone.remove()
     }
 }
+function adjustVolume() {
+    for(i in music)
+        music[i].audio.volume = settings.volume_music/100*(music[i].volume||1)
+    for(i in sounds)
+        sounds[i].audio.volume = settings.volume_sounds/100*(sounds[i].volume||1)
+}
 
 /* Rendering properties and functions */
 const canvas = document.getElementById('game')
@@ -124,9 +130,9 @@ function renderCircle(x,y,r,color) {
     ctx.fill()
 }
 
-function renderText(text,x,y,color='black',{size=1,font='sans-serif',centered=false,maxw=undefined}={}) {
+function renderText(text,x,y,color='black',{size=1,font='sans-serif',align='left',maxw=undefined}={}) {
     ctx.font = W/32*size+'px '+font
-    ctx.textAlign = centered ? 'center' : 'left'
+    ctx.textAlign = align /* left, center, right */
     ctx.fillStyle = color
     ctx.fillText(text,x,y+size,maxw)
 }

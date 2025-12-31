@@ -14,6 +14,7 @@ function menuSceneInit() {
 
 function menuSceneKeyPress(key) {
     if(key==' ') sceneChange('game',{type:'bars',sleep:500})
+    if(key=='s') sceneChange('settings',{type:'fade',sleep:0})
 }
 
 function menuSceneKeyRelease(key) {
@@ -26,14 +27,17 @@ function menuSceneLoop() {
         ctx.rotate(-Math.PI/24)
         ctx.translate(-100,40)
         ctx.scale(1.1,1.1)
+        ctx.filter = 'blur(4px)'
         for(i=0;i<W/MENU_SQUARE_SIZE;i++)
-            renderRect(MENU_SQUARE_SIZE*i,84+16*Math.sin(i+menu.ticks.squares/8),MENU_SQUARE_SIZE+1,MENU_SQUARE_SIZE*2,MENU_COLOR_BG_SQUARES)
+            renderRect(MENU_SQUARE_SIZE*i,84+16*Math.sin(i+menu.ticks.squares/8),MENU_SQUARE_SIZE+10,MENU_SQUARE_SIZE*2,MENU_COLOR_BG_SQUARES)
+        ctx.filter = 'none'
         ctx.resetTransform()
-        renderText('Jetpack',W*7/12,H*2/6,MENU_COLOR_TITLE,{centered:true,font:'Emulogic',size:1.8})
-        renderText('WEEEride',W*8/12,H*3/6,MENU_COLOR_TITLE,{centered:true,font:'Emulogic',size:1.8})
+        renderText('Jetpack',W*7/12,H*2/6,MENU_COLOR_TITLE,{align:'center',font:'Emulogic',size:1.8})
+        renderText('WEEEride',W*8/12,H*3/6,MENU_COLOR_TITLE,{align:'center',font:'Emulogic',size:1.8})
         ctx.drawImage(sprites.jetpack.img,W/9,H/6,256,256)
-        renderText('WASD/arrows: move',W/2,H*19/24,MENU_COLOR_SUBTITLE,{centered:true,font:'Emulogic',size:0.8})
-        renderText('Space: start game',W/2,H*21/24,MENU_COLOR_SUBTITLE,{centered:true,font:'Emulogic',size:0.8})
+        renderText('Use WASD/arrows to move',W/2,H*19/24,MENU_COLOR_SUBTITLE,{align:'center',font:'Emulogic',size:0.8,maxw:420})
+        renderText('Space: start game',W/2,H*21/24,MENU_COLOR_SUBTITLE,{align:'center',font:'Emulogic',size:0.8})
+        renderText('S: Settings',W/2,H*23/24,MENU_COLOR_SUBTITLE,{align:'center',font:'Emulogic',size:0.8})
         renderText('Version: '+VERSION,10,H-10,'white',{font:'Emulogic',size:0.4})
     }
     function update() {

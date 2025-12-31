@@ -1,10 +1,11 @@
 const GAME_COLOR_BG = 'lightblue'
 const GAME_COLOR_CEILING = '#335'
 const GAME_COLOR_FLOOR = '#335'
+const GAME_COLOR_LEADERS = ['#fd0','#abc','#a50','grey','grey']
 const GAME_CELL_SIZE = 32
 const GAME_PADDING = 2
-const GAME_FLOOR = H-GAME_CELL_SIZE*GAME_PADDING
 const GAME_CEILING = GAME_CELL_SIZE*GAME_PADDING
+const GAME_FLOOR = H-GAME_CELL_SIZE*GAME_PADDING+(GAME_CELL_SIZE-H%GAME_CELL_SIZE+1)%GAME_CELL_SIZE
 const GAME_LEFT_LIMIT = GAME_CELL_SIZE*GAME_PADDING
 const GAME_RIGHT_LIMIT = W/2
 const GAME_SPEED_H = 8
@@ -28,18 +29,20 @@ const patterns = {
             [0,0,1,1,1,1,1,1,0,0],
         ],
         [
-            [0,0,1,1,1,1,1,1,0,0],
-            [0,1,1,1,1,1,1,1,1,0],
-            [1,1,1,1,1,1,1,1,1,1],
-            [1,1,0,0,0,0,0,0,1,1],
-            [1,0,0,0,0,0,0,0,0,1],
+            [0,0,0,0,1,1,1,1,0,0,0,0],
+            [0,0,1,1,1,1,1,1,1,1,0,0],
+            [0,1,1,1,1,1,1,1,1,1,1,0],
+            [1,1,1,1,0,0,0,0,1,1,1,1],
+            [1,1,0,0,0,0,0,0,0,0,1,1],
+            [1,0,0,0,0,0,0,0,0,0,0,1],
         ],
         [
-            [1,0,0,0,0,0,0,0,0,1],
-            [1,1,0,0,0,0,0,0,1,1],
-            [1,1,1,1,1,1,1,1,1,1],
-            [0,1,1,1,1,1,1,1,1,0],
-            [0,0,1,1,1,1,1,1,0,0],
+            [1,0,0,0,0,0,0,0,0,0,0,1],
+            [1,1,0,0,0,0,0,0,0,0,1,1],
+            [1,1,1,1,0,0,0,0,1,1,1,1],
+            [0,1,1,1,1,1,1,1,1,1,1,0],
+            [0,0,1,1,1,1,1,1,1,1,0,0],
+            [0,0,0,0,1,1,1,1,0,0,0,0],
         ],
         [
             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -62,10 +65,9 @@ const patterns = {
             [1],
             [1],
             [1],
-            [1],
         ],
         [
-            [1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,1,1,1,1,1,1,1,1,1,1],
         ],
         [
             [1,0,1,0,1,0,1,0,1],
@@ -75,22 +77,28 @@ const patterns = {
             [1,0,1,0,1,0,1,0,1],
         ],
         [
-            [1,0,0,0,0,0,0],
-            [0,1,0,0,0,0,0],
-            [0,0,1,0,0,0,0],
-            [0,0,0,1,0,0,0],
-            [0,0,0,0,1,0,0],
-            [0,0,0,0,0,1,0],
-            [0,0,0,0,0,0,1],
+            [0,0,0,0,0,0],
+            [0,0,0,0,0,0],
+            [1,0,0,0,0,0],
+            [0,1,0,0,0,0],
+            [0,0,1,0,0,0],
+            [0,0,0,1,0,0],
+            [0,0,0,0,1,0],
+            [0,0,0,0,0,1],
+            [0,0,0,0,0,0],
+            [0,0,0,0,0,0],
         ],
         [
-            [0,0,0,0,0,0,1],
-            [0,0,0,0,0,1,0],
-            [0,0,0,0,1,0,0],
-            [0,0,0,1,0,0,0],
-            [0,0,1,0,0,0,0],
-            [0,1,0,0,0,0,0],
-            [1,0,0,0,0,0,0],
+            [0,0,0,0,0,0],
+            [0,0,0,0,0,0],
+            [0,0,0,0,0,1],
+            [0,0,0,0,1,0],
+            [0,0,0,1,0,0],
+            [0,0,1,0,0,0],
+            [0,1,0,0,0,0],
+            [1,0,0,0,0,0],
+            [0,0,0,0,0,0],
+            [0,0,0,0,0,0],
         ],
     ],
 }
@@ -198,6 +206,7 @@ const game = {
     entities:[],
     speed_h:0,
     pos_bg:0,
+    top_scores:[],
 }
 
 function gameSceneInit() {
@@ -209,9 +218,10 @@ function gameSceneInit() {
     game.player = new Player(GAME_CELL_SIZE*2,GAME_FLOOR-GAME_PLAYER_H)
     game.entities = []
     game.speed_h = GAME_SPEED_H
-    game.speed_bg = GAME_SPEED_BG
+    // game.speed_bg = GAME_SPEED_BG
     game.pos_bg = 0
     game.show_debug = false
+    game.top_scores = []
 }
 
 function gameChangeState(state) {
@@ -220,16 +230,31 @@ function gameChangeState(state) {
         soundStop('jetpack')
         soundPlay('death')
     }
+    if(state=='leaderboard') {
+        let name = prompt('Enter your name') || '<UNNAMED>'
+        if(name.length>9) name = name.slice(0,9)+'\u{2026}'
+        for(k in keys) keys[k].pressed = false
+        game.top_scores = JSON.parse(localStorage.getItem('top_scores')) || []
+        game.top_scores.push([name,game.score])
+        game.top_scores = game.top_scores.sort((a,b) => b[1]-a[1]).slice(0,5)
+        localStorage.setItem('top_scores',JSON.stringify(game.top_scores))
+    }
 }
 
 function gameSceneKeyPress(key) {
     if(game.state=='running') {
         if(key=='l') gameChangeState('lose')
         if(key=='m') musicPlay()
-        if(key=='g') game.show_debug = !game.show_debug
         if(key=='ArrowUp' || key=='w' || key==' ') soundPlay('jetpack')
+        if(key=='g') {
+            game.show_debug = !game.show_debug
+            console.log(localStorage)
+        }
     }
-    if(game.state=='lose') {
+    else if(game.state=='lose') {
+        if(key==' ') gameChangeState('leaderboard')
+    }
+    else if(game.state=='leaderboard') {
         if(key==' ') sceneChange('game',{type:'bars',sleep:500})
         if(key=='m') sceneChange('menu',{type:'circle',sleep:500})
     }
@@ -277,9 +302,6 @@ function gameSceneLoop() {
             renderRect(0,0,W,GAME_CEILING,GAME_COLOR_CEILING)
             renderRect(0,GAME_FLOOR,W,H-GAME_FLOOR,GAME_COLOR_FLOOR)
             renderText('v '+VERSION,10,H-10,'green',{font:'Emulogic',size:0.4})
-            if(game.show_debug) {
-                renderText('Speed: '+game.speed_h,W*2/3,GAME_CEILING*3/4,'green',{font:'emulogic',size:0.8})
-            }
         }
         function renderLoseScreen() {
             renderRect(
@@ -289,19 +311,62 @@ function gameSceneLoop() {
                 H*GAME_LOSESCREEN_SIZE,
                 'rgba(0,0,0,0.8)'
             )
-            renderText('GAME OVER',W/2,H*2/5,'white',{centered:true,font:'emulogic'})
-            renderText('Your score is '+game.score,W/2,H*3/5,'white',{centered:true,font:'emulogic',size:0.6})
-            renderText('Press space to retry',W/2,H*2/3,'yellow',{centered:true,font:'emulogic',size:0.5})
+            renderText('GAME OVER',W/2,H*2/5,'white',{align:'center',font:'emulogic'})
+            renderText('Your score is '+game.score,W/2,H*3/5,'white',{align:'center',font:'emulogic',size:0.6})
+            renderText('Press space to continue',W/2,H*2/3,'yellow',{align:'center',font:'emulogic',size:0.5})
+        }
+        function renderLeaderboard() {
+            renderRect(
+                W/2*(1-GAME_LOSESCREEN_SIZE),
+                H/2*(1-GAME_LOSESCREEN_SIZE*1.2),
+                W*GAME_LOSESCREEN_SIZE,
+                H*GAME_LOSESCREEN_SIZE*1.2,
+                'rgba(0,0,0,0.8)'
+            )
+            renderText('LEADERBOARD',W/2,H*1/4,'white',{align:'center',font:'emulogic'})
+            // for(let i=0;i<5;i++)
+            //     renderText(
+            //         i+1+'.',
+            //         W/3,H*2/5-20+i*36,
+            //         GAME_COLOR_LEADERS[i],{align:'center',font:'emulogic',size:0.8}
+            //     )
+            game.top_scores.forEach((entry,i) => {
+                renderText(
+                    i+1+'.',
+                    W/3,H*2/5-20+i*36,
+                    GAME_COLOR_LEADERS[i],{align:'center',font:'emulogic',size:0.8}
+                )
+                renderText(
+                    entry[0]+': ',
+                    W*3/5,H*2/5-20+i*36,
+                    GAME_COLOR_LEADERS[i],{align:'right',font:'emulogic',size:0.6}
+                )
+                renderText(
+                    entry[1],
+                    W*3/5,H*2/5-20+i*36,
+                    GAME_COLOR_LEADERS[i],{align:'left',font:'emulogic',size:0.6}
+                )
+            })
+            renderText('Press space to retry',W/2,H*4/5-30,'yellow',{align:'center',font:'emulogic',size:0.5})
+            renderText('Press M to Menu',W/2,H*4/5,'yellow',{align:'center',font:'emulogic',size:0.5})
         }
         function renderScore() {
             renderText('Score: '+game.score,16,GAME_CEILING*3/4,'green',{font:'emulogic'})
+            if(game.show_debug)
+                renderText('Speed: '+game.speed_h,W*2/3,GAME_CEILING*3/4,'green',{font:'emulogic',size:0.8})
+        }
+        function renderGrid() {
+            for(let i=0;i<H/GAME_CELL_SIZE;i++) renderRect(0,i*GAME_CELL_SIZE,W,1,'black')
+            for(let j=0;j<W/GAME_CELL_SIZE;j++) renderRect(j*GAME_CELL_SIZE,0,1,H,'black')
         }
         /* Render pipeline */
         /* 0 */ renderBG()
         /* 1 */ game.entities.forEach(e => e.render())
         /* 2 */ game.player.render()
+        /* 6 */ if(game.show_debug) renderGrid()
         /* 3 */ if(game.state=='lose') renderLoseScreen()
-        /* 4 */ if(game.state=='running') renderScore()
+        /* 4 */ if(game.state=='leaderboard') renderLeaderboard()
+        /* 5 */ if(game.state=='running') renderScore()
     }
     function update() {
         if(game.state=='running') {

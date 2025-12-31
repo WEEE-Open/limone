@@ -6,7 +6,7 @@ function mainInit() {
 
 function mainKeyPress(key) {
     window[display.scene+'SceneKeyPress'](key)
-    if(key=='Enter') toggleFullscreen()
+    if(key=='f') toggleFullscreen()
 }
 
 function mainKeyRelease(key) {
